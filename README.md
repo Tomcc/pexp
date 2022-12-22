@@ -1,7 +1,7 @@
 # pexp
 Persistently EXPort environment vars, across sessions.
 
-`pexp` is a lot like `export`, but it also persists the variable to disk and instantly sets it in every other open session.
+`pexp` is a lot like `export`, but it also persists the variable to disk and instantly refreshes it in every other open session.
 
 Useful for system-wide variables that can change often and are annoying to re-export, like keys, `RUST_BACKTRACE` and so on!
 
