@@ -132,7 +132,7 @@ fn main() -> Result<()> {
             let mut watcher = notify::recommended_watcher(move |res| match res {
                 Ok(_) => {
                     // trigger the SIGUSR2 signal
-                    kill(target_pid, SIGUSR2).unwrap();
+                    kill(target_pid, SIGUSR2).expect("Failed to send SIGUSR2 signal");
                 }
                 Err(e) => {
                     println!("Syncenv error: Watching failed. Cause: {:?}", e);
