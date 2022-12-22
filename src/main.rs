@@ -21,6 +21,15 @@ struct SetArgs {
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
+/// Unset an environment variable
+#[argh(subcommand, name = "unset")]
+struct UnsetArgs {
+    /// name of the variable
+    #[argh(positional)]
+    name: String,
+}
+
+#[derive(FromArgs, PartialEq, Debug)]
 /// Start the watch daemon against ~/.syncenvrc
 #[argh(subcommand, name = "watch")]
 struct WatchArgs {
@@ -31,6 +40,7 @@ struct WatchArgs {
 #[argh(subcommand)]
 enum Subcommands {
     Set(SetArgs),
+    Unset(UnsetArgs),
     Watch(WatchArgs),
 }
 
@@ -64,41 +74,52 @@ fn load_existing() -> Result<String> {
     Ok(contents)
 }
 
+fn load_lines_except(name: &str) -> Result<Vec<String>> {
+    let db_str = load_existing()?;
+
+    // split into lines, delete the target line if it exists
+    let starts_with = format!("export {}=", name);
+    let lines: Vec<String> = db_str
+        .lines()
+        .filter(|line| !line.starts_with(&starts_with))
+        .map(str::to_string)
+        .collect();
+
+    Ok(lines)
+}
+
+fn dump_lines(lines: impl IntoIterator<Item = String>) -> Result<()> {
+    let path = get_rc_path()?;
+    let mut file = std::fs::File::create(&path)?;
+    for line in lines {
+        writeln!(file, "{}", line)?;
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let args = argh::from_env::<Args>();
 
     match args.command {
         Subcommands::Set(args) => {
-            let db_str = load_existing()?;
+            // split into lines, delete the target line if it exists
+            let mut lines = load_lines_except(&args.name)?;
 
-            // split into lines, filtering comments
-            let mut lines: Vec<String> = db_str.lines().map(str::to_string).collect();
+            // now append the new version to the end and sort alphabetically
+            let target_line = format!("export {}={}", args.name, args.value);
+            lines.push(target_line);
+            lines.sort();
 
-            // Find the line that matches args.name, given the "export VAR=..." format, and edit it
-            let starts_with = format!("export {}=", args.name);
-            let target_line = format!("export {}=\"{}\"", args.name, args.value);
+            // and dump them back out
+            dump_lines(lines)?;
+        }
+        Subcommands::Unset(args) => {
+            // split into lines, delete the target line if it exists
+            let lines = load_lines_except(&args.name)?;
 
-            let mut found = false;
-            for line in &mut lines.iter_mut() {
-                if line.starts_with(&starts_with) {
-                    *line = target_line.clone();
-                    found = true;
-                    break;
-                }
-            }
-
-            // if not found, append and sort alphabetically
-            if !found {
-                lines.push(target_line);
-                lines.sort();
-            }
-
-            // dump the lines out, overwriting the file
-            let path = get_rc_path()?;
-            let mut file = std::fs::File::create(&path)?;
-            for line in lines {
-                writeln!(file, "{}", line)?;
-            }
+            // and dump them back out
+            dump_lines(lines)?;
         }
         Subcommands::Watch(_watch_args) => {
             // watch the file and immediately exit if anything happens.
