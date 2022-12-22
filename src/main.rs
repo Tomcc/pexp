@@ -33,7 +33,9 @@ struct UnsetArgs {
 /// Start the watch daemon against ~/.syncenvrc
 #[argh(subcommand, name = "watch")]
 struct WatchArgs {
-    // empty
+    /// target PID that will receive the change signal
+    #[argh(positional)]
+    pid: nix::pty::SessionId,
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
@@ -121,11 +123,17 @@ fn main() -> Result<()> {
             // and dump them back out
             dump_lines(lines)?;
         }
-        Subcommands::Watch(_watch_args) => {
-            // watch the file and immediately exit if anything happens.
-            // The shell script will source the file again.
-            let mut watcher = notify::recommended_watcher(|res| match res {
-                Ok(_) => exit(0),
+        Subcommands::Watch(args) => {
+            use nix::sys::signal::*;
+
+            let target_pid = nix::unistd::Pid::from_raw(args.pid);
+
+            // watch the file and send a signal to the target process if anything changes
+            let mut watcher = notify::recommended_watcher(move |res| match res {
+                Ok(_) => {
+                    // trigger the SIGUSR2 signal
+                    kill(target_pid, SIGUSR2).unwrap();
+                }
                 Err(e) => {
                     println!("Syncenv error: Watching failed. Cause: {:?}", e);
                     exit(1)
