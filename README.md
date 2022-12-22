@@ -10,6 +10,9 @@ Useful for system-wide variables that can change often and are annoying to re-ex
 ```sh
 pexp FOO BAR
 echo $FOO   # prints "BAR"
+exit
+...
+echo $FOO   # still prints "BAR"
 ```
 
 ## How
@@ -18,7 +21,12 @@ Hacks, mostly. It creates a `~/.pexprc` file to store every export, and automati
 
 ## Installation
 
-Clone this repository, then put 
+Clone this repository, then build the binary (requires Rust)
+```bash
+git clone https://github.com/Tomcc/pexp.git
+cargo install --path pexp
+```
+then add this:
 
 ```bash
 source "this_repo/pexp_setup.sh"
