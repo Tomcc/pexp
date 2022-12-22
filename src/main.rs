@@ -30,7 +30,7 @@ struct UnsetArgs {
 }
 
 #[derive(FromArgs, PartialEq, Debug)]
-/// Start the watch daemon against ~/.syncenvrc
+/// Start the watch daemon against ~/.pexprc
 #[argh(subcommand, name = "watch")]
 struct WatchArgs {
     /// target PID that will receive the change signal
@@ -53,7 +53,7 @@ struct Args {
     command: Subcommands,
 }
 
-const RC_FILE: &str = ".syncenvrc";
+const RC_FILE: &str = ".pexprc";
 
 fn get_rc_path() -> Result<PathBuf> {
     let home = dirs::home_dir().ok_or(anyhow!("Could not find home directory"))?;
@@ -68,7 +68,7 @@ fn load_existing() -> Result<String> {
     // if no file is existing, create a new one
     if !path.exists() {
         let mut file = std::fs::File::create(&path)?;
-        writeln!(file, "# Warning: this file is managed by syncenv #")?;
+        writeln!(file, "# Warning: this file is managed by pexp #")?;
     }
 
     let contents = std::fs::read_to_string(path)?;
@@ -135,7 +135,7 @@ fn main() -> Result<()> {
                     kill(target_pid, SIGUSR2).expect("Failed to send SIGUSR2 signal");
                 }
                 Err(e) => {
-                    println!("Syncenv error: Watching failed. Cause: {:?}", e);
+                    println!("pexp error: Watching failed. Cause: {:?}", e);
                     exit(1)
                 }
             })?;
