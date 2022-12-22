@@ -28,8 +28,9 @@ pexp_unset() {
     pexp_bin unset "$1"
 }
 
-# source the .pexprc file right away
+# source the .pexprc file right away, make sure it exists
 PEXP_RC="$HOME/.pexprc"
+touch "$PEXP_RC"
 source "$PEXP_RC"
 
 # set up a trap to source the .pexprc file when it changes
