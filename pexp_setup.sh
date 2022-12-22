@@ -29,11 +29,12 @@ pexp_unset() {
 }
 
 # source the .pexprc file right away
-source "$HOME/.pexprc"
+PEXP_RC="$HOME/.pexprc"
+source "$PEXP_RC"
 
 # set up a trap to source the .pexprc file when it changes
 on_change() {
-    source "$HOME/.pexprc"
+    source "$PEXP_RC"
 }
 
 trap on_change SIGUSR2
