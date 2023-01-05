@@ -3,6 +3,7 @@ use anyhow::Result;
 use argh::{self, FromArgs};
 use notify::RecursiveMode;
 use notify::Watcher;
+use shell_quote::bash;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::exit;
@@ -109,7 +110,11 @@ fn main() -> Result<()> {
             let mut lines = load_lines_except(&args.name)?;
 
             // now append the new version to the end and sort alphabetically
-            let target_line = format!("export {}={}", args.name, args.value);
+            let escaped = bash::quote(args.value);
+            let escaped = escaped
+                .to_str()
+                .expect("Invalid UTF-8 values are not supported");
+            let target_line = format!("export {}={}", args.name, escaped);
             lines.push(target_line);
             lines.sort();
 
